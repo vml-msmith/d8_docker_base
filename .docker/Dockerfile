@@ -3,13 +3,15 @@ MAINTAINER "Michael Smith" <michael.smith@vml.com>
 
 ENV container docker
 
-RUN yum -y install httpd; yum clean all;
+RUN yum -y update && yum clean all
+RUN yum -y install httpd php php-mysql; yum clean all
 
 COPY config/httpd/httpd.conf /etc/httpd/conf/httpd.conf
 
-#RUN service httpd start
-RUN apachectl
 
 EXPOSE 80
 
-CMD ["/usr/sbin/init"]
+ADD run-httpd.sh /run-httpd.sh
+RUN chmod -v +x /run-httpd.sh
+
+CMD ["/run-httpd.sh"]
