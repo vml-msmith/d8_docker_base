@@ -8,20 +8,17 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 DOCKER_COMPOSE="docker-compose -f ${DIR}/../.docker/docker-compose.yml -p testdocker"
 
 
+## Startup the Docker servers. Ensures a new build first.
 printf "${YELLOW}Starting Docker servers....${NC}"
 echo ""
-
 docker-compose -f ${DIR}/../.docker/docker-compose.yml -p testdocker build
 `${DOCKER_COMPOSE} up -d`
 
 exit_code=0
 
+## Get the mapped port 80, and check that we receive a proper 200 HTTP code.
 port=`docker port testdocker_app_1 80`
 port=${port#*:}
-
-port_ssl=`docker port testdocker_app_1 443`
-port_ssl=${port_ssl#*:}
-
 echo ""
 printf "Testing normal port 80 accesss.... "
 http_code=`curl -I -sL -w "%{http_code}" "localhost:${port}" -o /dev/null`
@@ -35,6 +32,10 @@ fi
 printf " (${http_code})"
 echo ""
 
+
+## Get the mapped port 443 and check that we receive a proper 200 HTTP code.
+port_ssl=`docker port testdocker_app_1 443`
+port_ssl=${port_ssl#*:}
 printf "Testing SSL port 443 accesss.... "
 http_code_ssl=`curl -I -sL -w "%{http_code}" "localhost:${port_ssl}" -o /dev/null`
 if [ ${http_code_ssl} -eq 200 ]
@@ -47,6 +48,7 @@ fi
 printf " (${http_code_ssl})"
 echo ""
 
+## Test that index.php returns a good 200 HTTP code.
 printf "Testing PHP is working.... "
 http_code=`curl -I -sL -w "%{http_code}" "localhost:${port}/index.php" -o /dev/null`
 if [ ${http_code} -eq 200 ]
@@ -58,6 +60,8 @@ else
 fi
 echo ""
 
+
+## Shut the whole thing down.
 echo ""
 printf "${YELLOW}Cleaning up....${NC}"
 echo ""
