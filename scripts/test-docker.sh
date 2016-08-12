@@ -4,11 +4,15 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 NC='\033[0m' # No Color
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DOCKER_COMPOSE="docker-compose -f ${DIR}/../.docker/docker-compose.yml -p testdocker"
+
 
 printf "${YELLOW}Starting Docker servers....${NC}"
 echo ""
-docker-compose -f ../.docker/docker-compose.yml -p testdocker build
-docker-compose -f ../.docker/docker-compose.yml -p testdocker up -d
+
+docker-compose -f ${DIR}/../.docker/docker-compose.yml -p testdocker build
+`${DOCKER_COMPOSE} up -d`
 
 exit_code=0
 
@@ -57,6 +61,6 @@ echo ""
 echo ""
 printf "${YELLOW}Cleaning up....${NC}"
 echo ""
-docker-compose -f ../.docker/docker-compose.yml -p testdocker kill
+`${DOCKER_COMPOSE} kill`
 
 exit ${exit_code}
