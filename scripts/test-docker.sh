@@ -8,6 +8,15 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 DOCKER_COMPOSE="docker-compose -f ${DIR}/../.docker/docker-compose.yml -p testdocker"
 
 
+# Setup docroot
+make_docroot=0
+if [ ! -d "${DIR}/../docroot" ]; then
+    make_docroot=1
+    mkdir -p ${DIR}/../docroot
+    touch ${DIR}/../docroot/index.html
+fi
+
+
 ## Startup the Docker servers. Ensures a new build first.
 printf "${YELLOW}Starting Docker servers....${NC}"
 echo ""
@@ -15,6 +24,7 @@ docker-compose -f ${DIR}/../.docker/docker-compose.yml -p testdocker build
 `${DOCKER_COMPOSE} up -d`
 
 exit_code=0
+
 
 ## Get the mapped port 80, and check that we receive a proper 200 HTTP code.
 port=`docker port testdocker_app_1 80`
@@ -49,9 +59,19 @@ fi
 printf " (${http_code_ssl})"
 echo ""
 
+
+# Setup phpinfo
+make_phpinfo=0
+if [ ! -f ${DIR}/../docroot/phpinfo.php ]; then
+    make_phpinfo=1
+    echo "<?php phpinfo();" > ${DIR}/../docroot/phpinfo.php
+fi
+
 ## Test that index.php returns a good 200 HTTP code.
 printf "Testing PHP is working.... "
-http_code=`curl -sLk -w "%{http_code}" "localhost:${port}/index.php" -o /dev/null`
+http_code=`curl -sLk -w "%{http_code}" "localhost:${port}/phpinfo.php" -o /dev/null`
+# TODO: Test PHP Version.
+
 if [ ${http_code} -eq 200 ]
 then
     printf "${GREEN}Success${NC}"
@@ -60,6 +80,14 @@ else
     exit_code=1
 fi
 echo ""
+
+if [ ${make_phpinfo} ]; then
+    rm ${DIR}/../docroot/phpinfo.php
+fi
+
+if [ ${make_docroot} ]; then
+    rm -r ${DIR}/../docroot
+fi
 
 
 ## Shut the whole thing down.
