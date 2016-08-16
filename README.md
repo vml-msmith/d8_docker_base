@@ -6,7 +6,10 @@
 ./scripts/run-docker.sh
 ```
 
-### Launch your website
+The website should launch automatically in you default browser.
+
+
+### Launch your website again
 Run docker ps and find your port.
 
 ```
@@ -16,5 +19,5 @@ docker ps
 Open a browser and type...
 
 ```
-http://localhost:<portYouFoundInDockerPs
+http://localhost:<portYouFoundInDockerPs>
 ```
