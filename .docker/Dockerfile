@@ -10,7 +10,9 @@ RUN rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.
 RUN rpm -Uvh https://mirror.webtatic.com/yum/el7/webtatic-release.rpm
 
 RUN yum -y update && yum clean all
-RUN yum -y install httpd php55w php55w-gd php55w-mysql php55w-opcache mod_ssl openssl; yum clean all
+RUN yum -y install httpd
+RUN yum -y install php56w php56w-gd php56w-mysql php56w-opcache php56w-xml mod_ssl openssl;
+RUN yum clean all
 
 COPY config/httpd/httpd.conf /etc/httpd/conf/httpd.conf
 
