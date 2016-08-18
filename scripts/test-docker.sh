@@ -7,17 +7,23 @@ NC='\033[0m' # No Color
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 DOCKER_COMPOSE="docker-compose -f ${DIR}/../.docker/docker-compose.yml -p testdocker"
 
-
 # Setup docroot
 make_docroot=0
 if [ ! -d "${DIR}/../docroot" ]; then
+    echo "Making docroot"
     make_docroot=1
     mkdir -p ${DIR}/../docroot
     touch ${DIR}/../docroot/index.html
 fi
+## Test for PHP Extensions.
+echo "<?php
+echo ' version=' . phpversion() . ' ';
+foreach (get_loaded_extensions() as \$v) { echo ' ' . \$v . '=1 '; }
+echo ' mbstring_input=' . ini_get('mbstring.http_input');
+echo ' mbstring_output=' . ini_get('mbstring.http_output');
+" > ${DIR}/../docroot/phpsettings.php
 
-
-## Startup the Docker servers. Ensures a new build first.
+## Startup the Docker servers. Ensures a new build first.:Q
 printf "${YELLOW}Starting Docker servers....${NC}"
 echo ""
 docker-compose -f ${DIR}/../.docker/docker-compose.yml -p testdocker build
@@ -85,14 +91,39 @@ if [ ${make_phpinfo} ]; then
     rm ${DIR}/../docroot/phpinfo.php
 fi
 
-if [ ${make_docroot} ]; then
+
+test_output=`curl -sL "localhost:${port}/phpsettings.php"`
+
+declare -A php_settings
+
+for setting in ${test_output};
+do
+    exploded=(${setting//=/ })
+    key=${exploded[0]}
+    value=${exploded[1]}
+    php_settings+=(["$key"]="$value")
+done
+
+## Test for xml extension.
+printf "Testing php extension: xml... "
+if [ ${php_settings['xml']++isset} ]; then
+    printf "${GREEN}Success${NC}"
+else
+    printf "${RED}Failure${NC}"
+    exit_code=1
+fi
+
+rm -r ${DIR}/../docroot/phpsettings.php
+
+if [ ${make_docroot} -eq 1 ]; then
+    echo "remove docroot"
     rm -r ${DIR}/../docroot
 fi
 
 
 ## Shut the whole thing down.
 echo ""
-printf "${YELLOW}Cleaning up....${NC}"
+printf "\n${YELLOW}Cleaning up....${NC}"
 echo ""
 `${DOCKER_COMPOSE} kill`
 
