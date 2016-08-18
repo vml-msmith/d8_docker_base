@@ -1,24 +1,41 @@
 # docker-compose.yml
 
-app:
-  build: .
-  dockerfile: Dockerfile
-  environment:
-    VIRTUAL_HOST: dev.cpt.com
-  volumes:
-    - "../:/var/www"
-  links:
-    - mysql
-  ports:
-    - "80"
-    - "443"
-    - "22"
+version: '2'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      VIRTUAL_HOST: dev.cpt.com
+      PHP_OPCACHE: enabled
+    volumes:
+      - "../:/var/www"
+    links:
+      - mysql
+    ports:
+      - "80"
+      - "443"
+      - "22"
 
-mysql:
-  image: mariadb:5.5
-  environment:
-    MYSQL_ROOT_PASSWORD: root
-    MYSQL_DATABASE: drupal
-    VIRTUAL_PORT: 3306
-  ports:
-    - "3306"
+  phpcs:
+    image: imega/docker-phpcs
+    volumes:
+      - "../:/workspace"
+
+  linter:
+    build:
+      context: .
+      dockerfile: Dockerfile.linter
+    volumes:
+      - "../:/var/www"
+      - "../scripts/:/var/scripts"
+
+  mysql:
+    image: mariadb:5.5
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: drupal
+      VIRTUAL_PORT: 3306
+    ports:
+      - "3306"
